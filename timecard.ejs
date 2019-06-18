@@ -1,0 +1,330 @@
+<% include partials/header %>
+
+
+
+<p></p>
+<div class="container">
+  <div class='ui grid'>
+    <div class='four wide column'>
+      <h1 class='ui header'>
+        Time Card
+        <div class='sub header'><%= currentUser.first_name %> <%= currentUser.last_name %></div>
+      </h1>
+    </div>
+    <div class='four wide column'>
+    </div>
+    <div class='four wide column'>
+    </div>
+    <div class='two wide column'>
+    </div>
+    <div class='two wide column'>
+        <% if(lastClock == 'OUT'){ %>
+            <form action ='/timecard/clock-in' method='POST'>
+            <button class='ui green button form-control'>
+                Clock-In
+            </button>
+            </form>
+        <% } else if(lastClock == 'IN'){ %>
+            <form action ='/timecard/clock-out' method='POST'>
+            <button class='ui red button form-control'>
+                Clock-Out
+            </button>
+            </form>
+        <% } %>
+    </div>
+  </div>
+</div>
+
+<p style='margin-bottom: 50'></p>
+<div class='ui center aligned container'>
+    <%- locals.flash %>
+</div>
+<div class="container" id='tableHolder'>
+  <% for(var w=weeks-1; w > -1; w--) {%>
+    <% clocks.forEach(function(clock){
+        if(clock.week == w && clock.day == 1){%>
+            <h3>Week of <%= clock.date.toString().substring(4,10) %></h3>
+        <% }
+    }) %>
+      
+
+      <table class="ui celled table" id='sum_table<%=w%>'>
+          <thead>
+              <tr class='titlerow'>
+                 <th>Date</th>
+                 <th>Total Hours</th>
+                 <th>Clock-In</th>
+                 <th>Lunch Clock-Out</th>
+                 <th>Lunch Clock-In</th>
+                 <th>Clock-Out</th>
+             </tr>
+         </thead>
+         <tbody>
+             
+                 
+                    <% clocks.forEach(function(clock){ 
+
+                       if(clock.week == w){ 
+                        for(var d=1; d<6; d++){
+
+                            if(clock.day == d){%>
+
+                            <% 
+                            var clockRequests = ['', '', '', ''];
+                            var icons = ['', '', '', ''];
+                            requests.forEach(function(request){
+                                if(request.clockDate.toString().substring(0,15) == clock.date.toString().substring(0,15)){
+
+                                    if(request.resolved == 'false' || request.resolved == null){
+                                        clockRequests[request.pos] = 'warning';
+                                        icons[request.pos] = '<i class="attention icon"></i>'
+                                    } else if(request.resolved == 'approved'){
+                                        clockRequests[request.pos] = 'success';
+                                        icons[request.pos] = '<i class="icon checkmark"></i>'
+                                    } else if(request.resolved == 'declined'){
+                                        clockRequests[request.pos] = 'error';
+                                        icons[request.pos] = '<i class="icon close"></i>'
+                                    }
+
+                                }
+                            });
+                            %>
+
+                            <tr>
+                             <td><%= clock.date.toString().substring(0, 15) %></td>
+                             <td class= 'rowDataSd'>
+                                 <% if(clock.clock4){ %>
+                                    <%= ((clock.clock4.value - clock.clock3.value)+(clock.clock2.value - clock.clock1.value)).toFixed(2) %>
+                                <% }else if(clock.clock2){ %>
+                                    <%=(clock.clock2.value - clock.clock1.value).toFixed(2) %>
+                                <% } else { %>
+                                    0.0
+                                <% } %>
+                             </td>
+                             <td class = '<%= clockRequests[1] %> selectable'>
+                                <% if(clock.clock1){ %>
+                                    <a href='/timecard/timecardId=<%=clock.clock1.ID%>&pos=1'>
+                                        <%- icons[1] %>
+                                    <% if(clock.clock1.hour > 12){
+                                        var clockhour1 = clock.clock1.hour - 12;
+                                        var meridies = 'PM'
+                                    } else if(clock.clock1.hour == 12){
+                                        var clockhour1 = clock.clock1.hour;
+                                        var meridies = 'PM'
+                                    } else {
+                                        var clockhour1 = clock.clock1.hour;
+                                        var meridies = 'AM'
+                                    }
+                                    
+                                    if(clockhour1 < 10){ %>
+                                        0<%= clockhour1 %>
+                                    <% } else { %>
+                                        <%= clockhour1 %>
+                                    <% } %>
+                                    :
+                                    <% if(clock.clock1.minutes < 10){ %>
+                                        0<%= clock.clock1.minutes %>
+                                    <% } else { %>
+                                        <%= clock.clock1.minutes %>
+                                    <% } %>
+                                    <%= meridies %>
+                                    </a>
+                                <% }else{ %>
+                                    <% if(clock.date.getMonth()+1 < 10){
+                                        var month = '0'+(clock.date.getMonth()+1);
+                                    }else {
+                                        var month = clock.date.getMonth()+1;
+                                    } 
+                                    if(clock.date.getDate() < 10){
+                                        var date = '0'+clock.date.getDate();
+                                    } else {
+                                        var date = clock.date.getDate();
+                                    }%>
+                                    <a href='/timecard/date=<%=clock.date.getFullYear()%>-<%= month %>-<%= date %>&day=<%=d%>&type=IN&pos=1'>
+                                        <%- icons[1] %>
+                                    </a>
+                                <% } %>
+                             </td>
+                             <td class = '<%= clockRequests[2] %> selectable'>
+                                
+                                <% if(clock.clock2){%>
+                                    <a href='/timecard/timecardId=<%=clock.clock2.ID%>&pos=2'>
+                                        <%- icons[2] %>
+                                    <% if(clock.clock2.hour > 12){
+                                        var clockhour2 = clock.clock2.hour - 12;
+                                        var meridies = 'PM'
+                                    } else if(clock.clock2.hour == 12){
+                                        var clockhour2 = clock.clock2.hour;
+                                        var meridies = 'PM'
+                                    } else {
+                                        var clockhour2 = clock.clock2.hour;
+                                        var meridies = 'AM'
+                                    }
+                                    
+                                    if(clockhour2 < 10){ %>
+                                        0<%= clockhour2 %>
+                                    <% } else { %>
+                                        <%= clockhour2 %>
+                                    <% } %>
+                                    :
+                                    <% if(clock.clock2.minutes < 10){ %>
+                                        0<%= clock.clock2.minutes %>
+                                    <% } else { %>
+                                        <%= clock.clock2.minutes %>
+                                    <% } %>
+                                    <%= meridies %>
+                                    </a>
+                                <% }else{ %>
+                                    <% if(clock.date.getMonth()+1 < 10){
+                                        var month = '0'+(clock.date.getMonth()+1);
+                                    }else {
+                                        var month = clock.date.getMonth()+1;
+                                    } 
+                                    if(clock.date.getDate() < 10){
+                                        var date = '0'+clock.date.getDate();
+                                    } else {
+                                        var date = clock.date.getDate();
+                                    }%>
+                                    <a href='/timecard/date=<%=clock.date.getFullYear()%>-<%= month %>-<%= date %>&day=<%=d%>&type=OUT&pos=2'>
+                                        <%- icons[2] %>
+                                    </a>
+                                <% } %>
+                             </td>
+                             <td class = '<%= clockRequests[3] %> selectable'>
+                                
+                                <% if(clock.clock3){ %>
+                                    <a href='/timecard/timecardId=<%=clock.clock3.ID%>&pos=3'>
+                                        <%- icons[3] %>
+                                    <% if(clock.clock3.hour > 12){
+                                        var clockhour3 = clock.clock3.hour - 12;
+                                        var meridies = 'PM'
+                                    } else if(clock.clock3.hour == 12){
+                                        var clockhour3 = clock.clock3.hour;
+                                        var meridies = 'PM'
+                                    } else {
+                                        var clockhour3 = clock.clock3.hour;
+                                        var meridies = 'AM'
+                                    }
+                                    
+                                    if(clockhour3 < 10){ %>
+                                        0<%= clockhour3 %>
+                                    <% } else { %>
+                                        <%= clockhour3 %>
+                                    <% } %>
+                                    :
+                                    <% if(clock.clock3.minutes < 10){ %>
+                                        0<%= clock.clock3.minutes %>
+                                    <% } else { %>
+                                        <%= clock.clock3.minutes %>
+                                    <% } %>
+                                    <%= meridies %>
+                                    </a>
+                                <% }else{ %>
+                                    <% if(clock.date.getMonth()+1 < 10){
+                                        var month = '0'+(clock.date.getMonth()+1);
+                                    }else {
+                                        var month = clock.date.getMonth()+1;
+                                    } 
+                                    if(clock.date.getDate() < 10){
+                                        var date = '0'+clock.date.getDate();
+                                    } else {
+                                        var date = clock.date.getDate();
+                                    }%>
+                                    <a href='/timecard/date=<%=clock.date.getFullYear()%>-<%= month %>-<%= date %>&day=<%=d%>&type=IN&pos=3'>
+                                        <%- icons[3] %>
+                                    </a>
+                                <% } %>
+                             </td>
+                             <td class = '<%= clockRequests[4] %> selectable'>
+                                
+                                <% if(clock.clock4){ %>
+                                    <a href='/timecard/timecardId=<%=clock.clock4.ID%>&pos=4'>
+                                        <%- icons[4] %>
+                                    <% if(clock.clock4.hour > 12){
+                                        var clockhour4 = clock.clock4.hour - 12;
+                                        var meridies = 'PM'
+                                    } else if(clock.clock4.hour == 12){
+                                        var clockhour4 = clock.clock4.hour;
+                                        var meridies = 'PM'
+                                    } else {
+                                        var clockhour4 = clock.clock4.hour;
+                                        var meridies = 'AM'
+                                    }
+
+                                    if(clockhour4 < 10){ %>
+                                        0<%= clockhour4 %>
+                                    <% } else { %>
+                                        <%= clockhour4 %>
+                                    <% } %>
+                                    :
+                                    <% if(clock.clock4.minutes < 10){ %>
+                                        0<%= clock.clock4.minutes %>
+                                    <% } else { %>
+                                        <%= clock.clock4.minutes %>
+                                    <% } %>
+                                    <%= meridies %>
+                                    </a>
+                                <% }else{ %>
+                                    <% if(clock.date.getMonth()+1 < 10){
+                                        var month = '0'+(clock.date.getMonth()+1);
+                                    }else {
+                                        var month = clock.date.getMonth()+1;
+                                    } 
+                                    if(clock.date.getDate() < 10){
+                                        var date = '0'+clock.date.getDate();
+                                    } else {
+                                        var date = clock.date.getDate();
+                                    }%>
+                                    <a href='/timecard/date=<%=clock.date.getFullYear()%>-<%= month %>-<%= date %>&day=<%=d%>&type=OUT&pos=4'>
+                                        <%- icons[4] %>
+                                    </a>
+                                <% } %>
+                             </td>
+                            </tr>
+
+                            <% }
+                            }
+                        } 
+                    }) %>
+                 
+             
+         </tbody>
+         <tr class='totalColumn'>
+            <th>Total Hours:</th>
+            <th class='totalCol'></th>
+            <script>
+                Number.prototype.toFixedDown = function(digits) {
+                    var re = new RegExp("(\\d+\\.\\d{" + digits + "})(\\d)"),
+                        m = this.toString().match(re);
+                    return m ? parseFloat(m[1]) : this.valueOf();
+                };
+                   var total<%-w%>=0;
+                    $(document).ready(function(){
+
+                        var $dataRows=$("#sum_table<%= w %> tr:not('.totalColumn, .titlerow')");
+
+                        $dataRows.each(function() {
+                            $(this).find('.rowDataSd').each(function(i){ 
+                                console.log(total<%-w%> + " + "+parseFloat( $(this).html()))     
+                                total<%-w%>+=parseFloat( $(this).html());
+                                console.log("= "+total<%-w%>)
+                            });
+                        });
+                        $("#sum_table<%= w %> th.totalCol").each(function(i){  
+                            $(this).html(parseFloat(total<%-w%>).toFixedDown(2));
+                        });
+
+                    });
+            </script>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+         </tr>
+       </table>
+    <% } %>
+
+</div>
+
+
+<% include partials/footer %>
